@@ -23,7 +23,7 @@ def calculate_angle(a, b, c):
 state = "STANDING"
 rep_count = 0
 
-cap = cv2.VideoCapture("squat.mp4")
+cap = cv2.VideoCapture("squat_bad.mp4")
 
 # keep tracking without returning detection if detection confidence is over 0.5
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -37,7 +37,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         if results.pose_landmarks:
             mp_drawing.draw_landmarks(
-                image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS
+                image, results.pqose_landmarks, mp_pose.POSE_CONNECTIONS
             )
 
             landmarks = results.pose_landmarks.landmark
@@ -53,11 +53,40 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
             angle = calculate_angle(hip, knee, ankle)
 
             if left_knee.visibility > 0.5:
+                errors = []
+
                 if state == "STANDING" and angle < 120:
                     state = "SQUATTING"
                 elif state == "SQUATTING" and angle > 160:
                     state = "STANDING"
                     rep_count += 1
+
+                if state == "SQUATTING":
+                    left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+
+                    knee_x = left_knee.x
+                    ankle_x = left_ankle.x
+                    shoulder_x = left_shoulder.x
+                    hip_x = left_hip.x
+
+                    if abs(knee_x - ankle_x) > 0.08:
+                        errors.append("Knee cave")
+
+                    if abs(shoulder_x - hip_x) > 0.15:
+                        errors.append("Back rounding")
+
+                y_offset = 150
+                for error in errors:
+                    cv2.putText(
+                        image,
+                        error,
+                        (30, y_offset),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (0, 0, 255),
+                        2,
+                    )
+                    y_offset += 40
 
             cv2.putText(
                 image,
