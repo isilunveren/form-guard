@@ -6,17 +6,17 @@ from analyzer.pose_detector import calculate_angle
 mp_pose = mp.solutions.pose
 
 
-class SquatAnalyzer(BaseAnalyzer):
+class LungeAnalyzer(BaseAnalyzer):
     def __init__(self):
-        super().__init__("squat")
+        super().__init__("lunge")
 
     @property
     def down_threshold(self):
-        return 120
+        return 110
 
     @property
     def up_threshold(self):
-        return 160
+        return 155
 
     def is_visible(self, landmarks):
         knee = landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value]
@@ -38,9 +38,9 @@ class SquatAnalyzer(BaseAnalyzer):
         shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
         hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
 
-        if abs(knee.x - ankle.x) > 0.08:
-            errors.append("knee_cave")
-        if abs(shoulder.x - hip.x) > 0.15:
-            errors.append("back_rounding")
+        if knee.x - ankle.x > 0.10:
+            errors.append("knee_over_toe")
+        if abs(shoulder.x - hip.x) > 0.12:
+            errors.append("torso_lean")
 
         return errors

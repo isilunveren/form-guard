@@ -1,13 +1,29 @@
 import cv2
 import mediapipe as mp
+import sys
 from analyzer.pose_detector import get_landmarks, draw_pose
 from analyzer.squat_analyzer import SquatAnalyzer
+from analyzer.deadlift_analyzer import DeadliftAnalyzer
+from analyzer.lunge_analyzer import LungeAnalyzer
 
 
 mp_pose = mp.solutions.pose
 
+ANALYZERS = {
+    "squat": SquatAnalyzer,
+    "deadlift": DeadliftAnalyzer,
+    "lunge": LungeAnalyzer,
+}
+
+exercise = sys.argv[1] if len(sys.argv) > 1 else "squat"
+if exercise not in ANALYZERS:
+    print(f"Unknown exercise. Choose from: {list(ANALYZERS.keys())}")
+    sys.exit(1)
+
+analyzer = ANALYZERS[exercise]()
+print(f"Starting {exercise} analysis...")
+
 cap = cv2.VideoCapture("squat.mp4")
-analyzer = SquatAnalyzer()
 
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
     while cap.isOpened():
